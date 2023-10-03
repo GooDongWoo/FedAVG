@@ -3,12 +3,6 @@ import tensorflow as tf
 print(device_lib.list_local_devices())
 print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 '''
-pip install tensorflow.keras
-pip install matplotlib.pyplot
-pip install numpy
-pip install random
-
-
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 from tensorflow.keras.models import Sequential
