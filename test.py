@@ -16,7 +16,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import random as rd
-
+import pandas as pd
 print(f"@@@@@@@@ Start time: {datetime.now()}@@@@@@@@@@@")
 K_client_num=100
 S_round=30  #총 라운드 수
@@ -246,3 +246,4 @@ for env_num in range(9):
     plt.savefig(f'Round={S_round} B={env_setting[env_num][0]} E={env_setting[env_num][1]}Testset_accuracy.png')
     clear_session()
     plt.show()
+    np.savetxt(f'Round={S_round} B={env_setting[env_num][0]} E={env_setting[env_num][1]}Testset_accuracy.csv', np.array(y_vloss), delimiter=",", fmt="%.5f")
