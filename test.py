@@ -2,7 +2,6 @@ from tensorflow.python.client import device_lib
 from tensorflow.config import list_physical_devices
 print(device_lib.list_local_devices())
 print("Num GPUs Available: ", len(list_physical_devices('GPU')))
-
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 from tensorflow.keras.models import Sequential
@@ -12,15 +11,13 @@ from tensorflow.keras.datasets import mnist
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.backend import clear_session
 from datetime import datetime
-
 import matplotlib.pyplot as plt
 import numpy as np
 import random as rd
-import pandas as pd
 print(f"@@@@@@@@ Start time: {datetime.now()}@@@@@@@@@@@")
 K_client_num=100
 S_round=30  #총 라운드 수
-
+IS_DATA_CSV_EXIST=1
 
 #데이터(MNIST) 불러오고 전처리
 #데이터 가져오고 합쳐서 70,000개로 합치고 각각 리스트로 나누고 6000개씩 뽑기
@@ -69,50 +66,54 @@ y_train = to_categorical(y_train, 10)
 y_test = to_categorical(y_test, 10)
 
 # 할당하는 과정
-x_per_label=20
-data_label_list_origin=[0,1,2,3,4,5,6,7,8,9]
-data_label_list=[0,1,2,3,4,5,6,7,8,9]
-list_added_label_num=[0]*10
-last_label_left=-1# 마지막으로 1개밖에 안남은 라벨 숫자
+if not(IS_DATA_CSV_EXIST):
+    x_per_label=20
+    data_label_list=[0,1,2,3,4,5,6,7,8,9]
+    list_added_label_num=[0]*10
+    last_label_left=-1# 마지막으로 1개밖에 안남은 라벨 숫자
 
-list_combinational=[]
-list_added_label_idx=[]
-for iter in range(x_per_label*5):
-    while 1:
-        if len(data_label_list)<=1:
-            last_label_left=list_added_label_num[data_label_list[0]]
-            what_last_num=data_label_list[0]
-            break
+    list_combinational=[]
+    list_added_label_idx=[]
+    for iter in range(x_per_label*5):
+        while 1:
+            if len(data_label_list)<=1:
+                last_label_left=list_added_label_num[data_label_list[0]]
+                what_last_num=data_label_list[0]
+                break
 
-        temp_pick2=rd.sample(data_label_list,2)
+            temp_pick2=rd.sample(data_label_list,2)
 
-        if (list_added_label_num[temp_pick2[0]]==x_per_label) or (list_added_label_num[temp_pick2[1]]==x_per_label):
-            if (list_added_label_num[temp_pick2[0]]==x_per_label):
-                data_label_list.remove(temp_pick2[0])
-            if (list_added_label_num[temp_pick2[1]]==x_per_label):
-                data_label_list.remove(temp_pick2[1])
-            continue
-        
-        list_added_label_idx.append([temp_pick2[0]*6000+list_added_label_num[temp_pick2[0]]*300,temp_pick2[1]*6000+list_added_label_num[temp_pick2[1]]*300])
-        list_combinational.append(temp_pick2)
+            if (list_added_label_num[temp_pick2[0]]==x_per_label) or (list_added_label_num[temp_pick2[1]]==x_per_label):
+                if (list_added_label_num[temp_pick2[0]]==x_per_label):
+                    data_label_list.remove(temp_pick2[0])
+                if (list_added_label_num[temp_pick2[1]]==x_per_label):
+                    data_label_list.remove(temp_pick2[1])
+                continue
+            
+            list_added_label_idx.append([temp_pick2[0]*6000+list_added_label_num[temp_pick2[0]]*300,temp_pick2[1]*6000+list_added_label_num[temp_pick2[1]]*300])
+            list_combinational.append(temp_pick2)
 
-        list_added_label_num[temp_pick2[0]]+=1
-        list_added_label_num[temp_pick2[1]]+=1
-        break 
+            list_added_label_num[temp_pick2[0]]+=1
+            list_added_label_num[temp_pick2[1]]+=1
+            break 
 
-#일단 나머지를 라벨 한개짜리로 채우는거
-last_label_left_set=-1
-if (last_label_left!=-1):
-    last_label_left_set=(20-last_label_left)/2
-    for i______ in range(int(last_label_left_set)):
-        list_added_label_idx.append([what_last_num*6000+list_added_label_num[what_last_num]*300,what_last_num*6000+(list_added_label_num[what_last_num]+1)*300])
-        list_added_label_num[what_last_num]+=2
+    #일단 나머지를 라벨 한개짜리로 채우는거
+    last_label_left_set=-1
+    if (last_label_left!=-1):
+        last_label_left_set=(20-last_label_left)/2
+        for i______ in range(int(last_label_left_set)):
+            list_added_label_idx.append([what_last_num*6000+list_added_label_num[what_last_num]*300,what_last_num*6000+(list_added_label_num[what_last_num]+1)*300])
+            list_added_label_num[what_last_num]+=2
 
-print(list_combinational)
-print(list_added_label_num)
-print(list_added_label_idx)
-print(last_label_left_set)
-
+    print(list_combinational)
+    print(list_added_label_num)
+    print(list_added_label_idx)
+    print(last_label_left_set)
+else:
+    list_added_label_idx=[[48000, 36000], [6000, 30000], [0, 48300], [300, 30300], [24000, 30600], [48600, 24300], [12000, 30900], [42000, 12300], [42300, 24600], [31200, 24900], [18000, 54000], [600, 36300], [900, 18300], [25200, 1200], [54300, 1500], [18600, 48900], [6300, 25500], [12600, 31500], [1800, 25800], [31800, 2100], [54600, 12900], [49200, 18900], [32100, 19200], [36600, 6600], [19500, 42600], [54900, 6900], [19800, 2400], [49500, 32400], [42900, 7200], [43200, 13200], [32700, 13500], [33000, 2700], [7500, 55200], [49800, 13800], [7800, 36900], [8100, 33300], [50100, 55500], [8400, 20100], [55800, 50400], [20400, 26100], [8700, 43500], [43800, 56100], [50700, 56400], [56700, 3000], [37200, 20700], [3300, 37500], [3600, 14100], [57000, 14400], [26400, 14700], [21000, 9000], [44100, 15000], [21300, 57300], [3900, 51000], [9300, 51300], [21600, 4200], [21900, 26700], [9600, 51600], [15300, 51900], [9900, 4500], [52200, 33600], [52500, 57600], [10200, 4800], [5100, 33900], [27000, 52800], [57900, 5400], [44400, 15600], [53100, 58200], [22200, 15900], [22500, 44700], [5700, 22800], [58500, 37800], [45000, 27300], [34200, 10500], [53400, 23100], [10800, 45300], [45600, 58800], [27600, 11100], [23400, 27900], [28200, 59100], [38100, 28500], [45900, 38400], [46200, 16200], [11400, 53700], [28800, 11700], [59400, 23700], [46500, 38700], [59700, 46800], [47100, 39000], [47400, 39300], [39600, 47700], [16500, 34500], [29100, 39900], [16800, 34800], [35100, 17100], [17400, 40200], [29400, 40500], [29700, 40800], [17700, 35400], [35700, 41100], [41400, 41700]]
+    print(f"#########@@@@@@@@@@@@ DATA EXIST@@@@@@@@@@@@@@#########")
+    print(list_added_label_idx)    
+    
 print(f"@@@@@@@@ first initialized time: {datetime.now()}@@@@@@@@@@@")
 before_time=datetime.now()
 before_time_round=datetime.now()
@@ -120,8 +121,9 @@ after_time=datetime.now()
 
 #env loop start>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 env_num=0
+env_start_num=6
 env_setting=[[10,1],[10,5],[10,20],[50,1],[50,5],[50,20],[600,1],[600,5],[600,20]]
-for env_num in range(9):
+for env_num in range(env_start_num,9):
     B_batch=env_setting[env_num][0] # 배치 사이즈
     E_epoch=env_setting[env_num][0]  # 각 클라이언트마다 몇 에포크 돌릴지
     ##서버 모델 이니셜라이징
@@ -151,11 +153,10 @@ for env_num in range(9):
     clients_model_w=[]
     clients_path=[]
     server_w=server_model.get_weights()
-    #100명의 클라이언트 w를 산술평균해서 서버 w에 덮어 씌우기.
+
     history_temp=[[],[]]
     clients_history=[]
     ##클라이언트i 모델 이니셜라이징
-    # 모델 구조를 설정
     clients_model=Sequential()
     clients_model.add(Conv2D(32, kernel_size=(5, 5), input_shape=(28, 28, 1), activation='relu'))
     clients_model.add(Conv2D(64, (5, 5), activation='relu'))
@@ -203,9 +204,6 @@ for env_num in range(9):
                 
         server_w=(array_temp)
         server_model.set_weights(server_w)
-        #산술평균후 서버>>>>>>>>>>>>>>>>>클라이언트
-        #for j in range(K_client_num):
-        #    clients_model[j].set_weights(server_w)
 
         #서버의 1round마다의 데이터들의 히스토리를 모으는 과정
         history_temp[1].append(server_model.evaluate(x_test, y_test)[1])
@@ -228,7 +226,6 @@ for env_num in range(9):
     current_values = plt.gca().get_yticks()
     plt.gca().set_yticklabels(['{:.4f}'.format(x) for x in current_values])
     #plt.plot(x_len, y_loss, marker='.', c="blue", label='Trainset_accuracy')
-    # 그래프에 그리드, 레이블
     plt.legend(loc='lower right')
     plt.grid()
     plt.xlabel('Round')
@@ -236,11 +233,10 @@ for env_num in range(9):
     for x,y in zip(x_len,y_vloss):
         if(x%2==0):
             label = "{:.4f}".format(y)
-            plt.annotate(label, # this is the value which we want to label (text)
+            plt.annotate(label, 
                         (x,y), # x and y is the points location where we have to label
                         textcoords="offset points",
                         xytext=(0,10+11*(x%4)), # this for the distance between the points
-                        # and the text label
                         ha='center',
                         arrowprops=dict(arrowstyle="->", color='green'))
     plt.savefig(f'Round={S_round} B={env_setting[env_num][0]} E={env_setting[env_num][1]}Testset_accuracy.png')
