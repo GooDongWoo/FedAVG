@@ -121,7 +121,7 @@ after_time=datetime.now()
 
 #env loop start>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 env_num=0
-env_start_num=6
+env_start_num=8
 env_setting=[[10,1],[10,5],[10,20],[50,1],[50,5],[50,20],[600,1],[600,5],[600,20]]
 for env_num in range(env_start_num,9):
     B_batch=env_setting[env_num][0] # 배치 사이즈
@@ -243,3 +243,4 @@ for env_num in range(env_start_num,9):
     clear_session()
     plt.show()
     np.savetxt(f'Round={S_round} B={env_setting[env_num][0]} E={env_setting[env_num][1]}Testset_accuracy.csv', np.array(y_vloss), delimiter=",", fmt="%.5f")
+    break
