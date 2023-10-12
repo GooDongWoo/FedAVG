@@ -2,8 +2,10 @@ from tensorflow.python.client import device_lib
 from tensorflow.config import list_physical_devices
 print(device_lib.list_local_devices())
 print("Num GPUs Available: ", len(list_physical_devices('GPU')))
+
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPooling2D
 from tensorflow.keras.callbacks import ModelCheckpoint,EarlyStopping
@@ -15,9 +17,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random as rd
 print(f"@@@@@@@@ Start time: {datetime.now()}@@@@@@@@@@@")
+IS_DATA_CSV_EXIST=1
 K_client_num=100
 S_round=30  #총 라운드 수
-IS_DATA_CSV_EXIST=1
 
 #데이터(MNIST) 불러오고 전처리
 #데이터 가져오고 합쳐서 70,000개로 합치고 각각 리스트로 나누고 6000개씩 뽑기
@@ -44,7 +46,7 @@ print(x_all_sorted[y_all_sorted == 0].shape)
 x_train=sorted_x_train[0][:6000]
 x_test=sorted_x_train[0][6000:]
 for i in range(1,10):
-    x_train=np.concatenate([x_train,sorted_x_train[i][0:6000:1]], axis=0)
+    x_train=np.concatenate([x_train,sorted_x_train[i][0:6000]], axis=0)
     x_test=np.concatenate([x_test,sorted_x_train[i][6000:]], axis=0)
     
 tmp_int=0
@@ -113,7 +115,7 @@ else:
     list_added_label_idx=[[48000, 36000], [6000, 30000], [0, 48300], [300, 30300], [24000, 30600], [48600, 24300], [12000, 30900], [42000, 12300], [42300, 24600], [31200, 24900], [18000, 54000], [600, 36300], [900, 18300], [25200, 1200], [54300, 1500], [18600, 48900], [6300, 25500], [12600, 31500], [1800, 25800], [31800, 2100], [54600, 12900], [49200, 18900], [32100, 19200], [36600, 6600], [19500, 42600], [54900, 6900], [19800, 2400], [49500, 32400], [42900, 7200], [43200, 13200], [32700, 13500], [33000, 2700], [7500, 55200], [49800, 13800], [7800, 36900], [8100, 33300], [50100, 55500], [8400, 20100], [55800, 50400], [20400, 26100], [8700, 43500], [43800, 56100], [50700, 56400], [56700, 3000], [37200, 20700], [3300, 37500], [3600, 14100], [57000, 14400], [26400, 14700], [21000, 9000], [44100, 15000], [21300, 57300], [3900, 51000], [9300, 51300], [21600, 4200], [21900, 26700], [9600, 51600], [15300, 51900], [9900, 4500], [52200, 33600], [52500, 57600], [10200, 4800], [5100, 33900], [27000, 52800], [57900, 5400], [44400, 15600], [53100, 58200], [22200, 15900], [22500, 44700], [5700, 22800], [58500, 37800], [45000, 27300], [34200, 10500], [53400, 23100], [10800, 45300], [45600, 58800], [27600, 11100], [23400, 27900], [28200, 59100], [38100, 28500], [45900, 38400], [46200, 16200], [11400, 53700], [28800, 11700], [59400, 23700], [46500, 38700], [59700, 46800], [47100, 39000], [47400, 39300], [39600, 47700], [16500, 34500], [29100, 39900], [16800, 34800], [35100, 17100], [17400, 40200], [29400, 40500], [29700, 40800], [17700, 35400], [35700, 41100], [41400, 41700]]
     print(f"#########@@@@@@@@@@@@ DATA EXIST@@@@@@@@@@@@@@#########")
     print(list_added_label_idx)    
-    
+
 print(f"@@@@@@@@ first initialized time: {datetime.now()}@@@@@@@@@@@")
 before_time=datetime.now()
 before_time_round=datetime.now()
@@ -125,8 +127,8 @@ env_start_num=8
 env_setting=[[10,1],[10,5],[10,20],[50,1],[50,5],[50,20],[600,1],[600,5],[600,20]]
 for env_num in range(env_start_num,9):
     B_batch=env_setting[env_num][0] # 배치 사이즈
-    E_epoch=env_setting[env_num][0]  # 각 클라이언트마다 몇 에포크 돌릴지
-    print(f"###########B_batch={env_setting[env_num][0]}\n###########E_epoch={env_setting[env_num][0]}")
+    E_epoch=env_setting[env_num][1]  # 각 클라이언트마다 몇 에포크 돌릴지
+    print(f"###########B_batch={env_setting[env_num][0]}\n###########E_epoch={env_setting[env_num][1]}")
     ##서버 모델 이니셜라이징
     # 모델 구조를 설정
     server_model = Sequential()
@@ -148,7 +150,7 @@ for env_num in range(env_start_num,9):
     checkpointer = ModelCheckpoint(filepath=serverpath, monitor='val_loss', verbose=1, save_best_only=True)
     early_stopping_callback = EarlyStopping(monitor='val_loss', patience=10)'''
     # 모델 실행
-    server_history = server_model.fit(x_train[0:2], y_train[0:2], validation_split=0.25, epochs=1, batch_size=2, verbose=0) # 최대한 학습 안할려고 2개만 학습시킴...
+    server_history = server_model.fit(x_train[0:2], y_train[0:2], validation_split=0.25, epochs=1, batch_size=2, verbose=0) #최대한 학습 안할려고 2개만 학습시킴...
     #클라이언트 100명 각각 설정하는 것
     clients_model=[]
     clients_model_w=[]
@@ -234,14 +236,11 @@ for env_num in range(env_start_num,9):
     for x,y in zip(x_len,y_vloss):
         if(x%2==0):
             label = "{:.4f}".format(y)
-            plt.annotate(label, 
-                        (x,y), # x and y is the points location where we have to label
-                        textcoords="offset points",
-                        xytext=(0,10+11*(x%4)), # this for the distance between the points
-                        ha='center',
-                        arrowprops=dict(arrowstyle="->", color='green'))
-    plt.savefig(f'Round={S_round} B={env_setting[env_num][0]} E={env_setting[env_num][1]}Testset_accuracy.png')
+            plt.annotate(label,(x,y), # x and y is the points location where we have to label
+                        textcoords="offset points", xytext=(0,10+11*(x%4)), # this for the distance between the points
+                        ha='center',arrowprops=dict(arrowstyle="->", color='green'))
+    plt.savefig(f'./image/Round={S_round} B={env_setting[env_num][0]} E={env_setting[env_num][1]}Testset_accuracy.png')
     clear_session()
     plt.show()
-    np.savetxt(f'Round={S_round} B={env_setting[env_num][0]} E={env_setting[env_num][1]}Testset_accuracy.csv', np.array(y_vloss), delimiter=",", fmt="%.5f")
+    np.savetxt(f'./image/Round={S_round} B={env_setting[env_num][0]} E={env_setting[env_num][1]}Testset_accuracy.csv', np.array(y_vloss), delimiter=",", fmt="%.5f")
     break
